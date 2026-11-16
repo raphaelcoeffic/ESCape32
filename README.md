@@ -10,7 +10,7 @@ Features
 + Servo PWM, Oneshot125, automatic throttle calibration
 + DSHOT 300/600/1200, bidirectional DSHOT, extended telemetry
 + Analog/serial/iBUS/SBUS/SBUS2/CRSF/EXBUS/HoTT input mode
-+ KISS/iBUS/S.Port/CRSF/MSB/HoTT telemetry
++ KISS/iBUS/S.Port/CRSF/MSB/HoTT/EXBUS telemetry
 + DSHOT 3D mode, turtle mode, beacon, LED, programming
 + Sine startup mode, brushed mode, hybrid mode (sensored/sensorless)
 + Proportional brake, adjustable drag brake

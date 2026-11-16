@@ -48,7 +48,7 @@
 	XX(27, val, input_mode,  INPUT_MODE,  "servo;analog;serial;iBUS;SBUS;CRSF;EXBUS;HoTT", -1,    0,    7,  0, 0, rearm = 1) \
 	XX(28, val, input_ch1,   INPUT_CH1,   "",                                               0,    0,   32,  0, 0, rearm = 1) \
 	XX(29, val, input_ch2,   INPUT_CH2,   "",                                               0,    0,   32,  0, 0, 0) \
-	XX(30, val, telem_mode,  TELEM_MODE,  "KISS;KISS auto;iBUS;S.Port;CRSF;MSB;HoTT",      -1,    0,    6,  0, 0, 0) \
+	XX(30, val, telem_mode,  TELEM_MODE,  "KISS;KISS auto;iBUS;S.Port;CRSF;MSB;HoTT;EXBUS",-1,    0,    7,  0, 0, 0) \
 	XX(31, val, telem_phid,  TELEM_PHID,  "",                                               0,    0,   28,  0, 0, 0) \
 	XX(32, val, telem_poles, TELEM_POLES, "",                                               0,    2,  100,  0, 0, 0) \
 	XX(33, val, telem_volt,  TELEM_VOLT,  "",                                               0,  -80,  160,  0, 0, 0) \

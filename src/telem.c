@@ -30,6 +30,7 @@ static int ibusfunc(int len);
 static int sportfunc(int len);
 static int msbfunc(int len);
 static int hottfunc(int len);
+static int exbusfunc(int len);
 static int (*iofunc)(int len);
 static char iocnt, iobuf[128] __attribute__((aligned(2)));
 static char *iopos = iobuf;
@@ -71,6 +72,12 @@ void inittelem(void) {
 		case 6: // HoTT
 			iofunc = hottfunc;
 			USART1_BRR = CLK_CNT(19200);
+			break;
+#endif
+#ifndef DISABLE_EXBUS
+		case 7: // EX Bus
+			iofunc = exbusfunc;
+			USART1_BRR = CLK_CNT(125000);
 			break;
 #endif
 	}
@@ -281,6 +288,87 @@ static int hottfunc(int len) {
 	ioend = iobuf + 45;
 	USART1_CR1 = USART_CR1_UE | USART_CR1_TE;
 	return -1;
+}
+
+int exbusresp(char *buf, int x) { // Jeti EX telemetry response
+	static uint8_t n;
+	int a = DESIG_UNIQUE_ID0;
+	buf[0] = 0x3b;
+	buf[1] = 0x01;
+	buf[3] = x;
+	buf[4] = 0x3a;
+	buf[6] = 0x0f;
+	buf[8] = a & 0x1f;
+	buf[9] = 0xa4;
+	buf[10] = a >> 8;
+	buf[11] = a >> 16;
+	buf[12] = 0x00;
+	if (n < 7) { // Send description
+		static const char *const str1[] = {"ESCape32", "Temp1", "Temp2", "Volt", "Curr", "Csum", "RPM"};
+		static const char *const str2[] = {"", "C", "C", "V", "A", "mAh", ""};
+		char *p = buf + 15;
+		char *q = stpcpy(p, str1[n]);
+		int b = q - p; // len1
+		p = stpcpy(q, str2[n]);
+		int c = p - q; // len2
+		a = b + c;
+		buf[2] = a + 18;
+		buf[5] = a + 10;
+		buf[7] = a + 8;
+		buf[13] = n++;
+		buf[14] = b << 3 | c;
+		p[0] = crc8(buf + 7, a + 8);
+		p[1] = b = crc16ccitt(buf, a + 16);
+		p[2] = b >> 8;
+		return a + 18;
+	}
+	buf[2] = 0x26;
+	buf[5] = 0x1e;
+	buf[7] = 0x5c;
+	buf[13] = 0x11;
+	buf[14] = temp1;
+	buf[15] = temp1 >> 8;
+	buf[16] = 0x21;
+	buf[17] = temp2;
+	buf[18] = temp2 >> 8;
+	buf[19] = 0x34;
+	buf[20] = volt;
+	buf[21] = volt >> 8;
+	buf[22] = volt >> 16 | 0x40;
+	buf[23] = 0x44;
+	buf[24] = curr;
+	buf[25] = curr >> 8;
+	buf[26] = curr >> 16 | 0x40;
+	buf[27] = 0x54;
+	buf[28] = csum;
+	buf[29] = csum >> 8;
+	buf[30] = csum >> 16;
+	buf[31] = 0x64;
+	buf[32] = a = erpm / (cfg.telem_poles >> 1);
+	buf[33] = a >> 8;
+	buf[34] = a >> 16;
+	buf[35] = crc8(buf + 7, 28);
+	buf[36] = a = crc16ccitt(buf, 36);
+	buf[37] = a >> 8;
+	return 38;
+}
+
+static int exbusfunc(int len) {
+	static char sync;
+	for (char *buf = iobuf; len >= 8;) {
+		int a = buf[2];
+		int b = buf[5];
+		if (a != b + 8 || (len -= a) < 0 || crc16ccitt(buf, a)) break;
+		sync = 1; // Baud rate detected
+		if (buf[4] == 0x3a) { // Telemetry request
+			if (len || b) break;
+			return exbusresp(iobuf, buf[3]);
+		}
+		if (!len) return 0;
+		buf += a;
+	}
+	if (!sync) USART1_BRR = USART1_BRR == CLK_CNT(125000) ? CLK_CNT(250000) : CLK_CNT(125000);
+	return 0;
 }
 
 static void sendkiss(void) {

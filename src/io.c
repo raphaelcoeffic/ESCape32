@@ -821,69 +821,6 @@ static int crsffunc(int len) {
 	return 0;
 }
 
-static int exbusresp(int x) {
-	static uint8_t n;
-	int a = DESIG_UNIQUE_ID0;
-	iobuf[0] = 0x3b;
-	iobuf[1] = 0x01;
-	iobuf[3] = x;
-	iobuf[4] = 0x3a;
-	iobuf[6] = 0x0f;
-	iobuf[8] = a & 0x1f;
-	iobuf[9] = 0xa4;
-	iobuf[10] = a >> 8;
-	iobuf[11] = a >> 16;
-	iobuf[12] = 0x00;
-	if (n < 7) { // Send description
-		static const char *const str1[] = {"ESCape32", "Temp1", "Temp2", "Volt", "Curr", "Csum", "RPM"};
-		static const char *const str2[] = {"", "C", "C", "V", "A", "mAh", ""};
-		char *p = iobuf + 15;
-		char *q = stpcpy(p, str1[n]);
-		int b = q - p; // len1
-		p = stpcpy(q, str2[n]);
-		int c = p - q; // len2
-		a = b + c;
-		iobuf[2] = a + 18;
-		iobuf[5] = a + 10;
-		iobuf[7] = a + 8;
-		iobuf[13] = n++;
-		iobuf[14] = b << 3 | c;
-		p[0] = crc8(iobuf + 7, a + 8);
-		p[1] = b = crc16ccitt(iobuf, a + 16);
-		p[2] = b >> 8;
-		return a + 18;
-	}
-	iobuf[2] = 0x26;
-	iobuf[5] = 0x1e;
-	iobuf[7] = 0x5c;
-	iobuf[13] = 0x11;
-	iobuf[14] = temp1;
-	iobuf[15] = temp1 >> 8;
-	iobuf[16] = 0x21;
-	iobuf[17] = temp2;
-	iobuf[18] = temp2 >> 8;
-	iobuf[19] = 0x34;
-	iobuf[20] = volt;
-	iobuf[21] = volt >> 8;
-	iobuf[22] = volt >> 16 | 0x40;
-	iobuf[23] = 0x44;
-	iobuf[24] = curr;
-	iobuf[25] = curr >> 8;
-	iobuf[26] = curr >> 16 | 0x40;
-	iobuf[27] = 0x54;
-	iobuf[28] = csum;
-	iobuf[29] = csum >> 8;
-	iobuf[30] = csum >> 16;
-	iobuf[31] = 0x64;
-	iobuf[32] = a = erpm / (cfg.telem_poles >> 1);
-	iobuf[33] = a >> 8;
-	iobuf[34] = a >> 16;
-	iobuf[35] = crc8(iobuf + 7, 28);
-	iobuf[36] = a = crc16ccitt(iobuf, 36);
-	iobuf[37] = a >> 8;
-	return 38;
-}
-
 static int exbusfunc(int len) {
 	static char n = 10;
 	for (char *buf = iobuf; len >= 8;) {
@@ -899,7 +836,7 @@ static int exbusfunc(int len) {
 				break;
 			case 0x3a: // Telemetry request
 				if (len || b) break;
-				return exbusresp(buf[3]);
+				return exbusresp(iobuf, buf[3]);
 		}
 		if (!len) return 0;
 		buf += a;

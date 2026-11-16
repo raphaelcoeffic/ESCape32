@@ -471,12 +471,15 @@ void checkcfg(void) {
 	cfg.input_ch1 = 0;
 	cfg.input_ch2 = 0;
 #endif
-	cfg.telem_mode = clamp(cfg.telem_mode, 0, 6);
+	cfg.telem_mode = clamp(cfg.telem_mode, 0, 7);
 #ifdef DISABLE_MSB
 	if (cfg.telem_mode == 5) cfg.telem_mode = 0;
 #endif
 #ifdef DISABLE_HOTT
 	if (cfg.telem_mode == 6) cfg.telem_mode = 0;
+#endif
+#ifdef DISABLE_EXBUS
+	if (cfg.telem_mode == 7) cfg.telem_mode = 0;
 #endif
 	cfg.telem_phid =
 		cfg.telem_mode == 2 ||

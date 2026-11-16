@@ -127,6 +127,7 @@ void initled(void);
 void inittelem(void);
 void sendtelem(void);
 void sendtelemdata(const char *buf, int len);
+int exbusresp(char *buf, int x);
 int hallcode(void);
 void ledctl(int x);
 void hsictl(int x);
