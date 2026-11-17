@@ -36,6 +36,10 @@ void init(void) {
 #endif
 	GPIOA_PUPDR |= 0x10; // A2 (pull-up)
 	GPIOA_MODER &= ~0x10; // A2 (USART2_TX)
+#elif defined IO_PB6
+	RCC_APBENR2 |= RCC_APBENR2_USART1EN;
+	GPIOB_PUPDR |= 0x1000; // B6 (pull-up)
+	GPIOB_MODER &= ~0x1000; // B6 (USART1_TX)
 #else
 	RCC_APBENR1 |= RCC_APBENR1_TIM3EN;
 #ifdef IO_PA6

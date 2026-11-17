@@ -29,7 +29,7 @@
 #endif
 
 void initio(void) {
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 #ifdef IO_RXTX
 	GPIOA_PUPDR |= 0x80000000; // A15 (pull-down)
 	GPIOA_MODER &= ~0x40000000; // A15 (USART2_RX)
@@ -62,7 +62,7 @@ void initio(void) {
 	TIM1_CR1 = TIM_CR1_CEN | TIM_CR1_URS;
 }
 
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 int recvbuf(char *buf, int len) {
 	TIM1_EGR = TIM_EGR_UG;
 	TIM1_SR = ~TIM_SR_UIF;

@@ -39,6 +39,8 @@
 #elif defined IO_PA6
 #define IO_PIN 2
 #define TIM3_IDR (GPIOA_IDR & 0x40) // A6
+#elif defined IO_PB6
+#define IO_PIN 4
 #else
 #define IO_PIN 3
 #define TIM3_IDR (GPIOB_IDR & 0x10) // B4

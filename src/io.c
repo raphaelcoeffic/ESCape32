@@ -31,7 +31,7 @@ static void calibirq(void);
 static void servoirq(void);
 static void dshotirq(void);
 static void cliirq(void);
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 static void serialirq(void);
 static int serialfunc(int len);
 static int ibusfunc(int len);
@@ -53,7 +53,7 @@ static void setthrot(int x) {
 		x > cfg.throt_min + 50 ? scale(x, cfg.throt_min + 50, cfg.throt_max, 0, 2000): 0;
 }
 
-#if defined IO_PA2 || defined IO_AUX
+#if defined IO_PA2 || defined IO_PB6 || defined IO_AUX
 static void setbrake(int x) {
 	if (x < 0) return;
 	brake = scale(x, 1100, 1900, 0, cfg.duty_drag);
@@ -92,6 +92,11 @@ void initio(void) {
 	TIM_CR1(IOTIM) = TIM_CR1_URS;
 	TIM_EGR(IOTIM) = TIM_EGR_UG;
 	TIM_CR1(IOTIM) = TIM_CR1_CEN | TIM_CR1_ARPE | TIM_CR1_URS;
+#ifdef IO_PB6 // No timer input on B6, detect line activity with USART instead
+	USART2_CR3 = USART_CR3_HDSEL;
+	USART2_BRR = CLK_CNT(125000);
+	USART2_CR1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_RXNEIE;
+#endif
 #ifdef IO_AUX
 #if IOTIM2 == TIM16 || IOTIM2 == TIM17
 	TIM_CCMR1(IOTIM2) = TIM_CCMR1_CC1S_IN_TI1 | TIM_CCMR1_IC1F_DTF_DIV_8_N_8;
@@ -121,7 +126,7 @@ static void entryirq(void) {
 		}
 		if (++c < 16) return; // Wait for ~1s before entering CLI
 		ioirq = cliirq;
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 		io_serial();
 #ifdef IO_RXTX
 		GPIOA_PUPDR |= 0x80000000; // A15 (pull-down)
@@ -156,6 +161,11 @@ static void entryirq(void) {
 #endif
 		return;
 	}
+#ifdef IO_PB6
+	if (!(USART2_ISR & (USART_ISR_RXNE | USART_ISR_ORE))) return; // No line activity
+	USART2_RQR = USART_RQR_RXFRQ; // Clear RXNE
+	USART2_ICR = USART_ICR_ORECF | USART_ICR_FECF | USART_ICR_NCF;
+#endif
 	int t = TIM_CCR1(IOTIM); // Time between two rising edges
 	if (IO_ANALOG) {
 	analog:
@@ -167,7 +177,7 @@ static void entryirq(void) {
 	}
 	if (!n++) return; // First capture is always invalid
 	IWDG_KR = IWDG_KR_START;
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 	if (cfg.input_mode >= 2) {
 		ioirq = serialirq;
 		io_serial();
@@ -552,7 +562,7 @@ void iotim_isr(void) {
 	ioirq();
 }
 
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 void usart2_isr(void) {
 	ioirq();
 }

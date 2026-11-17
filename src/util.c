@@ -452,13 +452,16 @@ void checkcfg(void) {
 	cfg.throt_mid = clamp(cfg.throt_mid, cfg.throt_min + 100, cfg.throt_max - 100);
 	cfg.analog_min = clamp(cfg.analog_min, 0, 3200);
 	cfg.analog_max = clamp(cfg.analog_max, cfg.analog_min + 200, 3400);
-#ifdef IO_PA2
+#if defined IO_PA2 || defined IO_PB6
 	cfg.input_mode = clamp(cfg.input_mode, 0, 7);
 #ifdef DISABLE_EXBUS
 	if (cfg.input_mode == 6) cfg.input_mode = 0;
 #endif
 #ifdef DISABLE_HOTT
 	if (cfg.input_mode == 7) cfg.input_mode = 0;
+#endif
+#ifdef IO_PB6
+	if (cfg.input_mode < 2 || cfg.input_mode == 4) cfg.input_mode = 6; // Serial input only, no SBUS (TIM15)
 #endif
 	cfg.input_ch1 = clamp(cfg.input_ch1, 1, cfg.input_mode < 3 ? 0 : 32);
 	cfg.input_ch2 = clamp(cfg.input_ch2, 0, cfg.input_mode < 3 ? 0 : 32);
@@ -477,6 +480,9 @@ void checkcfg(void) {
 #endif
 #ifdef DISABLE_HOTT
 	if (cfg.telem_mode == 6) cfg.telem_mode = 0;
+#endif
+#ifdef IO_PB6
+	cfg.telem_mode = 0; // USART1 is used for input
 #endif
 	cfg.telem_phid =
 		cfg.telem_mode == 2 ||

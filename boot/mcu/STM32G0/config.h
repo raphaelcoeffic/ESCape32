@@ -19,3 +19,8 @@
 
 #define CLK 64000000
 #define PAGE_SIZE 2048
+
+#ifdef IO_PB6 // B6 (USART1) instead of A2 (USART2)
+#undef USART2_BASE
+#define USART2_BASE USART1_BASE
+#endif

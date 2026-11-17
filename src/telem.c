@@ -36,6 +36,9 @@ static char *iopos = iobuf;
 static char *ioend = iobuf;
 
 void inittelem(void) {
+#ifdef IO_PB6
+	return; // USART1 is used for input
+#endif
 #ifndef AT32F4
 	USART1_RTOR = 10;
 	USART1_CR2 = USART_CR2_RTOEN;
@@ -88,6 +91,7 @@ void inittelem(void) {
 	DMA_CNDTR(USART1_DMA_BASE, USART1_RX_DMA) = sizeof iobuf;
 }
 
+#ifndef IO_PB6
 void usart1_isr(void) {
 	if (USART1_CR1 & USART_CR1_TCIE) {
 		DMA_CCR(USART1_DMA_BASE, USART1_TX_DMA) = 0;
@@ -122,6 +126,7 @@ reading:
 	DMA_CNDTR(USART1_DMA_BASE, USART1_RX_DMA) = sizeof iobuf;
 	DMA_CCR(USART1_DMA_BASE, USART1_RX_DMA) = DMA_CCR_EN | DMA_CCR_MINC | DMA_CCR_PSIZE_8BIT | DMA_CCR_MSIZE_8BIT;
 }
+#endif
 
 void usart1_tx_dma_isr(void) {
 	DMA_IFCR(USART1_DMA_BASE) = DMA_IFCR_CTCIF(USART1_TX_DMA);

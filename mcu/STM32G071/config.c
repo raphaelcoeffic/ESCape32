@@ -135,7 +135,7 @@ skip:
 	GPIOA_AFRL |= 0x1000000; // A6 (TIM3_CH1)
 	GPIOA_PUPDR |= 0x1000; // A6 (pull-up)
 	GPIOA_MODER &= ~0x1000; // A6 (TIM3_CH1)
-#else
+#elif !defined IO_PB6
 	GPIOB_AFRL |= 0x10000; // B4 (TIM3_CH1)
 	GPIOB_PUPDR |= 0x100; // B4 (pull-up)
 	GPIOB_MODER &= ~0x100; // B4 (TIM3_CH1)
@@ -163,7 +163,11 @@ skip:
 	nvic_set_priority(NVIC_TIM34_IRQ, 0x40);
 #endif
 #endif
+#ifdef IO_PB6
+	nvic_set_priority(NVIC_USART1_IRQ, 0x40);
+#else
 	nvic_set_priority(NVIC_USART1_IRQ, 0x80);
+#endif
 	nvic_set_priority(NVIC_USART2_LPUART2_IRQ, 0x40);
 	nvic_set_priority(NVIC_DMA1_CHANNEL1_IRQ, 0x40); // TIM3 or TIM15 or USART2_RX
 	nvic_set_priority(NVIC_DMA1_CHANNEL2_3_IRQ, 0x80); // USART1_TX
@@ -322,6 +326,16 @@ void compctl(int x) {
 	}
 }
 
+#ifdef IO_PB6
+void io_serial(void) {
+	RCC_APBRSTR1 = RCC_APBRSTR1_TIM3RST;
+	RCC_APBRSTR1 = 0;
+	RCC_APBRSTR2 = RCC_APBRSTR2_USART1RST;
+	RCC_APBRSTR2 = 0;
+	nvic_clear_pending_irq(NVIC_TIM34_IRQ);
+	nvic_clear_pending_irq(NVIC_USART1_IRQ);
+}
+#else
 void io_serial(void) {
 	RCC_APBRSTR2 = RCC_APBRSTR2_TIM15RST;
 	RCC_APBRSTR2 = 0;
@@ -334,6 +348,7 @@ void io_serial(void) {
 	DMAMUX1_CxCR(1) = DMAMUX_CxCR_DMAREQ_ID_USART2_RX;
 	DMAMUX1_CxCR(5) = DMAMUX_CxCR_DMAREQ_ID_USART2_TX;
 }
+#endif
 
 #ifdef IO_PA6
 void io_analog(void) {

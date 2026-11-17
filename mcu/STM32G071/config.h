@@ -47,6 +47,8 @@
 #define IOTIM TIM3
 #ifdef IO_PA6
 #define IOTIM_IDR (GPIOA_IDR & 0x40) // A6
+#elif defined IO_PB6
+#define IOTIM_IDR (GPIOB_IDR & 0x40) // B6
 #else
 #define IOTIM_IDR (GPIOB_IDR & 0x10) // B4
 #endif
@@ -71,9 +73,17 @@
 #define USART1_TX_DMA 3
 #define usart1_tx_dma_isr dma1_channel2_3_isr
 
+#ifdef IO_PB6 // Serial input on B6 (USART1) instead of A2 (USART2)
+#undef USART2_BASE
+#define USART2_BASE USART1_BASE
+#define USART2_RX_DMA USART1_RX_DMA
+#define USART2_TX_DMA USART1_TX_DMA
+#define usart2_isr usart1_isr
+#else
 #define USART2_RX_DMA 1
 #define USART2_TX_DMA 5
 #define usart2_isr usart2_lpuart2_isr
+#endif
 
 #define tim1_com_isr tim1_brk_up_trg_com_isr
 #define tim3_isr tim34_isr
